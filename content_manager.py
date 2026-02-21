@@ -1,94 +1,71 @@
 import os
-import json
+import pandas as pd
 import random
-import time
-from datetime import datetime
-from google.oauth2 import service_account
-from googleapiclient.discovery import build
 
-# --- CONFIGURATION ---
+# --- SETTINGS ---
 BRAND_NAME = "ServicesHubnest"
-BASE_URL = "https://serviceshubnest.github.io"
+PLUMBER_PHONE = "+13085508314"
+DISPLAY_PHONE = "(308) 550-8314"
+EXCEL_FILE = "locations.xlsx" # Renamed for simplicity
 
-# --- YOUR OFFICIAL BOOKS ---
-BOOKS = [
-    {
-        "name": "Becoming You: Confidence, Connection, and Growth",
-        "type": "Ebook",
-        "price": "9.99",
-        "link": "https://play.google.com/store/books/details/Asif_Mehmood_Becoming_You?id=9IG-EQAAQBAJ",
-        "desc": "Master the art of confidence and personal growth."
-    },
-    {
-        "name": "Becoming You (Audiobook)",
-        "type": "Audiobook",
-        "price": "14.95",
-        "link": "https://play.google.com/store/audiobooks/details?id=AQAAAEAaNSp1IM",
-        "desc": "Listen and grow. The immersive audio experience of Becoming You."
-    }
-]
+def build_from_excel():
+    try:
+        # We read starting from the correct columns in your image
+        df = pd.read_excel(EXCEL_FILE)
+        
+        # Pick one random location
+        row = df.sample(n=1).iloc[0]
+        
+        city = str(row['City']).strip()
+        state = str(row['State']).strip()
+        zip_code = str(row['ZipCode']).strip()
+        
+    except Exception as e:
+        print(f"Error reading Excel: {e}")
+        return
 
-CITIES = ["London", "Manchester", "Birmingham", "Leeds", "Glasgow", "Liverpool"]
-SERVICES = [
-    {"slug": "emergency-plumber", "title": "Emergency Plumber"},
-    {"slug": "drain-cleaning", "title": "Drain Cleaning Specialist"},
-    {"slug": "boiler-repair", "title": "Boiler Repair & Service"}
-]
-
-def generate_schema(book, city):
-    """Creates Google Search 'Rich Snippets' for your book."""
-    schema = {
-        "@context": "https://schema.org/",
-        "@type": "Book",
-        "name": f"{book['name']} - {city} Readers Choice",
-        "author": {"@type": "Person", "name": "Asif Mehmood"},
-        "offers": {
-            "@type": "Offer",
-            "price": book['price'],
-            "priceCurrency": "USD",
-            "url": book['link']
-        }
-    }
-    return json.dumps(schema)
-
-def build_page():
-    city = random.choice(CITIES)
-    service = random.choice(SERVICES)
-    book = random.choice(BOOKS) # Promotes one of your books
+    # THE MAGIC: Combining keywords with your specific Excel data
+    services = ["24 Hour Emergency Plumber", "Burst Pipe Repair", "Drain Cleaning"]
+    service = random.choice(services)
     
-    slug = f"{service['slug']}-{city.lower()}"
-    if not os.path.exists('services'): os.makedirs('services')
+    # Targeting the Zip Code in the Title for "In Minutes" ranking
+    title = f"{service} in {city}, {state} {zip_code}"
+    slug = f"{service.lower().replace(' ', '-')}-{zip_code}"
 
     html_content = f"""
-    <html>
+    <!DOCTYPE html>
+    <html lang="en">
     <head>
-        <title>{service['title']} in {city} | {BRAND_NAME}</title>
-        <script type="application/ld+json">{generate_schema(book, city)}</script>
-        <style>
-            body {{ font-family: sans-serif; line-height: 1.6; padding: 20px; color: #333; }}
-            .book-card {{ border: 2px solid #007bff; padding: 20px; border-radius: 10px; margin-top: 30px; background: #f0f7ff; }}
-            .btn {{ background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; }}
-        </style>
+        <title>{title} | {BRAND_NAME}</title>
+        <meta name="description" content="Local {service} available now in {city} {zip_code}. Call {DISPLAY_PHONE}.">
     </head>
     <body>
-        <h1>{service['title']} Services in {city}</h1>
-        <p>Looking for expert help in {city}? Our local team is ready to assist with {service['title']}.</p>
-        
-        <div class="book-card">
-            <h2>Featured Resource: {book['name']}</h2>
-            <p>By Author Asif Mehmood</p>
-            <p>{book['desc']}</p>
-            <a href="{book['link']}" class="btn">Get it on Google Play (${book['price']})</a>
+        <div style="background:#bf0a30; color:white; text-align:center; padding:15px; font-weight:bold;">
+            🇺🇸 EMERGENCY SERVICE AVAILABLE IN {zip_code}
         </div>
-        
-        <footer><p>© 2026 {BRAND_NAME}</p></footer>
+        <div style="max-width:800px; margin:auto; padding:20px; font-family:sans-serif;">
+            <h1>{service} in {city}, {state}</h1>
+            <p>Our expert technicians are currently dispatched near <strong>{city} {zip_code}</strong>.</p>
+            
+            <a href="tel:{PLUMBER_PHONE}" style="display:block; background:#002868; color:white; padding:20px; text-align:center; text-decoration:none; font-size:2em; border-radius:10px;">
+                📞 CALL NOW: {DISPLAY_PHONE}
+            </a>
+
+            <hr style="margin:40px 0;">
+            
+            <h3>While You Wait: Becoming You</h3>
+            <p>Master your mindset while we fix your plumbing. Download Asif Mehmood's bestseller.</p>
+            <a href="https://play.google.com/store/books/details/Asif_Mehmood_Becoming_You?id=9IG-EQAAQBAJ">Get it on Google Play</a>
+        </div>
     </body>
     </html>
     """
-    
+
+    if not os.path.exists('services'): os.makedirs('services')
     with open(f"services/{slug}.html", "w") as f:
         f.write(html_content)
-    print(f"Created: {slug}.html promoting {book['type']}")
+    
+    print(f"🚀 Published: {title}")
 
 if __name__ == "__main__":
-    build_page()
+    build_from_excel()
