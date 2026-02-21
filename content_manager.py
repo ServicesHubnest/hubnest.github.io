@@ -1,71 +1,65 @@
 import os
-import pandas as pd
 import random
+import pandas as pd
+import requests
+from oauth2client.service_account import ServiceAccountCredentials
 
-# --- SETTINGS ---
+# ==========================================
+# 1. PASTE YOUR KEYWORD LISTS HERE
+# ==========================================
+# [Paste ULTRA_PLUMBING_KEYWORDS here]
+# [Paste ALL_EXPANDED_BOOK_KEYWORDS here]
+
 BRAND_NAME = "ServicesHubnest"
 PLUMBER_PHONE = "+13085508314"
-DISPLAY_PHONE = "(308) 550-8314"
-EXCEL_FILE = "locations.xlsx" # Renamed for simplicity
 
-def build_from_excel():
+# ==========================================
+# 2. THE INDEXING API FUNCTION
+# ==========================================
+def ping_google_indexing(url):
+    SCOPES = ["https://www.googleapis.com/auth/indexing"]
+    ENDPOINT = "https://indexing.googleapis.com/v3/urlNotifications:publish"
+    
+    # service_account.json is the file you get from Google Cloud
     try:
-        # We read starting from the correct columns in your image
-        df = pd.read_excel(EXCEL_FILE)
-        
-        # Pick one random location
-        row = df.sample(n=1).iloc[0]
-        
-        city = str(row['City']).strip()
-        state = str(row['State']).strip()
-        zip_code = str(row['ZipCode']).strip()
-        
+        creds = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", SCOPES)
+        access_token = creds.get_access_token().access_token
+        headers = {"Content-Type": "application/json", "Authorization": f"Bearer {access_token}"}
+        body = {"url": url, "type": "URL_UPDATED"}
+        response = requests.post(ENDPOINT, json=body, headers=headers)
+        print(f"Index Request: {response.status_code} for {url}")
     except Exception as e:
-        print(f"Error reading Excel: {e}")
-        return
+        print(f"Indexing Error: {e}")
 
-    # THE MAGIC: Combining keywords with your specific Excel data
-    services = ["24 Hour Emergency Plumber", "Burst Pipe Repair", "Drain Cleaning"]
-    service = random.choice(services)
+# ==========================================
+# 3. THE PAGE BUILDER
+# ==========================================
+def build_and_index():
+    # Load your Excel
+    df = pd.read_excel("locations.xlsx")
+    row = df.sample(n=1).iloc[0]
     
-    # Targeting the Zip Code in the Title for "In Minutes" ranking
-    title = f"{service} in {city}, {state} {zip_code}"
-    slug = f"{service.lower().replace(' ', '-')}-{zip_code}"
+    city = str(row['City'])
+    zip_code = str(row['ZipCode'])
 
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <title>{title} | {BRAND_NAME}</title>
-        <meta name="description" content="Local {service} available now in {city} {zip_code}. Call {DISPLAY_PHONE}.">
-    </head>
-    <body>
-        <div style="background:#bf0a30; color:white; text-align:center; padding:15px; font-weight:bold;">
-            🇺🇸 EMERGENCY SERVICE AVAILABLE IN {zip_code}
-        </div>
-        <div style="max-width:800px; margin:auto; padding:20px; font-family:sans-serif;">
-            <h1>{service} in {city}, {state}</h1>
-            <p>Our expert technicians are currently dispatched near <strong>{city} {zip_code}</strong>.</p>
-            
-            <a href="tel:{PLUMBER_PHONE}" style="display:block; background:#002868; color:white; padding:20px; text-align:center; text-decoration:none; font-size:2em; border-radius:10px;">
-                📞 CALL NOW: {DISPLAY_PHONE}
-            </a>
+    # Pick random keywords from your massive lists
+    p_key = random.choice(ULTRA_PLUMBING_KEYWORDS).format(city=city, zip_code=zip_code)
+    b_key = random.choice(ALL_EXPANDED_BOOK_KEYWORDS)
 
-            <hr style="margin:40px 0;">
-            
-            <h3>While You Wait: Becoming You</h3>
-            <p>Master your mindset while we fix your plumbing. Download Asif Mehmood's bestseller.</p>
-            <a href="https://play.google.com/store/books/details/Asif_Mehmood_Becoming_You?id=9IG-EQAAQBAJ">Get it on Google Play</a>
-        </div>
-    </body>
-    </html>
-    """
+    slug = f"emergency-repair-{zip_code}-{random.randint(100,999)}"
+    file_path = f"services/{slug}.html"
+    full_url = f"https://serviceshubnest.github.io/{file_path}"
 
+    # Generate HTML content
+    html = f"<html><head><title>{p_key}</title></head><body><h1>{p_key}</h1><p>{b_key}</p></body></html>"
+
+    # Save File
     if not os.path.exists('services'): os.makedirs('services')
-    with open(f"services/{slug}.html", "w") as f:
-        f.write(html_content)
-    
-    print(f"🚀 Published: {title}")
+    with open(file_path, "w") as f:
+        f.write(html)
+
+    # PUSH TO GOOGLE IMMEDIATELY
+    ping_google_indexing(full_url)
 
 if __name__ == "__main__":
-    build_from_excel()
+    build_and_index()
