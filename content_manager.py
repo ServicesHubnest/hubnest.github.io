@@ -73,7 +73,7 @@ def build_and_index():
 
     slug = f"plumber-{city.lower().replace(' ', '-')}-{zip_code}"
     file_path = f"services/{slug}.html"
-    full_url = f"https://serviceshubnest.github.io/{file_path}"
+    full_url = f"https://serviceshubnest.github.io/hubnest.github.io/{file_path}"
 
     # Simple HTML Template
     html = f"""<!DOCTYPE html><html><head><title>{p_key}</title></head>
