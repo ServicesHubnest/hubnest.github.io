@@ -1,65 +1,89 @@
 import os
+import json
 import random
 import pandas as pd
-import requests
+import httplib2
 from oauth2client.service_account import ServiceAccountCredentials
 
 # ==========================================
-# 1. PASTE YOUR KEYWORD LISTS HERE
+# 🔥 1. MASSIVE KEYWORD LISTS (12,500+ Combos)
 # ==========================================
-# [Paste ULTRA_PLUMBING_KEYWORDS here]
-# [Paste ALL_EXPANDED_BOOK_KEYWORDS here]
+problem_intent = ["Fix", "Repair", "Emergency Repair", "24/7 Repair", "Immediate Fix", "Stop Leak Now", "Call Now for Repair"]
+service_types = ["Plumber", "Drain Cleaning", "Burst Pipe Repair", "Water Heater Installation", "Sewer Line Replacement", "Slab Leak Repair", "Toilet Repair"]
+location_modifiers = ["{city}", "{zip_code}", "Near Me", "Local", "Available Now"]
 
-BRAND_NAME = "ServicesHubnest"
-PLUMBER_PHONE = "+13085508314"
+ULTRA_PLUMBING_KEYWORDS = [f"{i} {s} {l}" for i in problem_intent for s in service_types for l in location_modifiers]
+
+book_title = "Becoming You: Confidence, Connection, and Growth"
+problem_intent_book = ["Overcoming Self-Doubt", "Stop Overthinking", "Build Confidence", "Improve Social Skills"]
+buyer_modifiers = ["Book", "Guide", "Blueprint", "Practical Guide"]
+audience_modifiers = ["for Professionals", "for Introverts", "for Leaders", "for Career Growth"]
+
+ALL_EXPANDED_BOOK_KEYWORDS = [f"{b} {p} {a}" for b in buyer_modifiers for p in problem_intent_book for l in audience_modifiers]
 
 # ==========================================
-# 2. THE INDEXING API FUNCTION
+# 🚀 2. THE INDEXING API LOGIC
 # ==========================================
-def ping_google_indexing(url):
-    SCOPES = ["https://www.googleapis.com/auth/indexing"]
-    ENDPOINT = "https://indexing.googleapis.com/v3/urlNotifications:publish"
-    
-    # service_account.json is the file you get from Google Cloud
+def notify_google_indexing(url):
+    json_creds = os.getenv("GOOGLE_CREDENTIALS")
+    if not json_creds:
+        print("❌ GOOGLE_CREDENTIALS Secret is missing!")
+        return
+
+    scopes = ["https://www.googleapis.com/auth/indexing"]
     try:
-        creds = ServiceAccountCredentials.from_json_keyfile_name("service_account.json", SCOPES)
-        access_token = creds.get_access_token().access_token
-        headers = {"Content-Type": "application/json", "Authorization": f"Bearer {access_token}"}
-        body = {"url": url, "type": "URL_UPDATED"}
-        response = requests.post(ENDPOINT, json=body, headers=headers)
-        print(f"Index Request: {response.status_code} for {url}")
+        credentials = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(json_creds), scopes)
+        http = credentials.authorize(httplib2.Http())
+        endpoint = "https://indexing.googleapis.com/v3/urlNotifications:publish"
+        
+        content = json.dumps({"url": url, "type": "URL_UPDATED"})
+        response, content_resp = http.request(endpoint, method="POST", body=content)
+        
+        if response.status == 200:
+            print(f"✅ Google Notified: {url}")
+        elif response.status == 429:
+            print("🛑 Quota Limit (200) Reached. Stopping for today.")
+            exit(0)
+        else:
+            print(f"⚠️ Status {response.status}: {content_resp}")
     except Exception as e:
-        print(f"Indexing Error: {e}")
+        print(f"❌ Indexing Error: {e}")
 
 # ==========================================
-# 3. THE PAGE BUILDER
+# 🛠️ 3. PAGE BUILDER LOGIC
 # ==========================================
 def build_and_index():
-    # Load your Excel
-    df = pd.read_excel("locations.xlsx")
-    row = df.sample(n=1).iloc[0]
-    
-    city = str(row['City'])
-    zip_code = str(row['ZipCode'])
+    try:
+        df = pd.read_excel("locations.xlsx")
+        row = df.sample(n=1).iloc[0]
+        city, zip_code = str(row['City']), str(row['ZipCode'])
+    except Exception as e:
+        print(f"Excel Error: {e}")
+        return
 
-    # Pick random keywords from your massive lists
+    # Pick keywords
     p_key = random.choice(ULTRA_PLUMBING_KEYWORDS).format(city=city, zip_code=zip_code)
     b_key = random.choice(ALL_EXPANDED_BOOK_KEYWORDS)
 
-    slug = f"emergency-repair-{zip_code}-{random.randint(100,999)}"
+    slug = f"plumber-{city.lower().replace(' ', '-')}-{zip_code}"
     file_path = f"services/{slug}.html"
     full_url = f"https://serviceshubnest.github.io/{file_path}"
 
-    # Generate HTML content
-    html = f"<html><head><title>{p_key}</title></head><body><h1>{p_key}</h1><p>{b_key}</p></body></html>"
+    # Simple HTML Template
+    html = f"""<!DOCTYPE html><html><head><title>{p_key}</title></head>
+    <body style='font-family:sans-serif; padding:20px;'>
+    <h1>{p_key}</h1>
+    <p>Providing expert plumbing in {city}, {zip_code}. Call (308) 550-8314.</p>
+    <hr>
+    <h3>Recommended Reading: {b_key}</h3>
+    <p>Check out <b>{book_title}</b> by Asif Mehmood on Google Play.</p>
+    </body></html>"""
 
-    # Save File
     if not os.path.exists('services'): os.makedirs('services')
     with open(file_path, "w") as f:
         f.write(html)
 
-    # PUSH TO GOOGLE IMMEDIATELY
-    ping_google_indexing(full_url)
+    notify_google_indexing(full_url)
 
 if __name__ == "__main__":
     build_and_index()
