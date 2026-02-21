@@ -193,10 +193,17 @@ def build_and_index():
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(html)
 
+        # --- ADD THE TIMER HERE ---
+        print(f"⏳ Page created. Waiting 120s for GitHub to go live...")
+        time.sleep(120) 
+        # --------------------------
+
         notify_google_indexing(full_url)
+
 # --- THE CODE BELOW MUST BE FLUSH TO THE LEFT (NO INDENTATION) ---
 
 if __name__ == "__main__":
+    import time # Make sure this is imported!
     print("🎬 Starting...")
     build_and_index()
     print("✅ Finished.")
