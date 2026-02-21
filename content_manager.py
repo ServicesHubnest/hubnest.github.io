@@ -65,7 +65,7 @@ def build_and_index():
         print(f"Excel Error: {e}")
         return
 
-    # 🔥 We run this TWICE per execution to get 1 Plumbing + 1 Book page
+    # 🔥 Runs TWICE: 1 Plumbing Page + 1 Book Page per execution
     for category in ["plumbing", "book"]:
         row = df.sample(n=1).iloc[0]
         city, zip_code = str(row['City']), str(row['ZipCode'])
@@ -75,17 +75,34 @@ def build_and_index():
             slug = f"plumber-{city.lower().replace(' ', '-')}-{zip_code}"
         else:
             keyword = random.choice(ALL_EXPANDED_BOOK_KEYWORDS)
-            # Create a unique slug for the book pages too
             slug = f"book-{keyword.lower().replace(' ', '-')}-{zip_code}"
 
         file_path = f"services/{slug}.html"
         full_url = f"https://serviceshubnest.github.io/hubnest.github.io/{file_path}"
 
-        # Professional Book Promotion Section
-    html = f"""<!DOCTYPE html><html><head><title>{keyword}</title></head>
-    <body style='font-family:sans-serif; padding:20px; line-height:1.6;'>
+        # Updated HTML with Schema (for Phone Numbers) and Book Buttons
+        html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <title>{keyword}</title>
+    <script type="application/ld+json">
+    {{
+      "@context": "https://schema.org",
+      "@type": "PlumbingService",
+      "name": "{keyword}",
+      "telephone": "(308) 550-8314",
+      "address": {{
+        "@type": "PostalAddress",
+        "addressLocality": "{city}",
+        "postalCode": "{zip_code}",
+        "addressCountry": "US"
+      }}
+    }}
+    </script>
+</head>
+<body style='font-family:sans-serif; padding:20px; line-height:1.6;'>
     <h1>{keyword}</h1>
-    <p>Providing expert service in {city}, {zip_code}. Contact us for immediate support.</p>
+    <p>Providing expert service in <b>{city}, {zip_code}</b>. Call <b>(308) 550-8314</b> for immediate support.</p>
     
     <div style='background:#f4f4f4; padding:20px; border-radius:10px; margin-top:30px; border:1px solid #ddd;'>
         <h3 style='margin-top:0;'>Special Recommendation: {book_title}</h3>
@@ -103,13 +120,17 @@ def build_and_index():
             </a>
         </div>
     </div>
-    </body></html>"""
+</body>
+</html>"""
 
-        if not os.path.exists('services'): os.makedirs('services')
-        with open(file_path, "w") as f:
+        # Ensure directory exists and write file
+        if not os.path.exists('services'): 
+            os.makedirs('services')
+            
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(html)
 
-        # This calls the indexing function
+        # Notify Google
         notify_google_indexing(full_url)
 
 if __name__ == "__main__":
