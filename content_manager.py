@@ -8,69 +8,87 @@ from googleapiclient.discovery import build
 
 # --- CONFIGURATION ---
 BRAND_NAME = "ServicesHubnest"
-BASE_URL = "https://serviceshubnest.github.io" # Update this to your final URL
+BASE_URL = "https://serviceshubnest.github.io"
 
-# SEO SEED DATA
-CITIES = ["London", "Manchester", "New York", "Chicago", "Los Angeles", "Toronto"]
-SERVICES = [
-    {"slug": "emergency-plumber", "title": "24/7 Emergency Plumber", "desc": "Urgent leak and burst pipe repair."},
-    {"slug": "drain-cleaning", "title": "Professional Drain Cleaning", "desc": "Clearing stubborn clogs and main line blockages."},
-    {"slug": "water-heater", "title": "Water Heater Repair & Install", "desc": "Fast service for gas and electric heaters."}
+# --- YOUR OFFICIAL BOOKS ---
+BOOKS = [
+    {
+        "name": "Becoming You: Confidence, Connection, and Growth",
+        "type": "Ebook",
+        "price": "9.99",
+        "link": "https://play.google.com/store/books/details/Asif_Mehmood_Becoming_You?id=9IG-EQAAQBAJ",
+        "desc": "Master the art of confidence and personal growth."
+    },
+    {
+        "name": "Becoming You (Audiobook)",
+        "type": "Audiobook",
+        "price": "14.95",
+        "link": "https://play.google.com/store/audiobooks/details?id=AQAAAEAaNSp1IM",
+        "desc": "Listen and grow. The immersive audio experience of Becoming You."
+    }
 ]
 
-def human_sync_delay():
-    """Safety: Random delay between 1-5 mins to avoid Google bot-detection."""
-    wait = random.randint(60, 300)
-    print(f"[*] System Sync: Pausing for {wait}s to maintain natural update patterns...")
-    time.sleep(wait)
+CITIES = ["London", "Manchester", "Birmingham", "Leeds", "Glasgow", "Liverpool"]
+SERVICES = [
+    {"slug": "emergency-plumber", "title": "Emergency Plumber"},
+    {"slug": "drain-cleaning", "title": "Drain Cleaning Specialist"},
+    {"slug": "boiler-repair", "title": "Boiler Repair & Service"}
+]
 
-def notify_google_indexing(url):
-    """Pings Google Indexing API using GitHub Secrets."""
-    try:
-        if 'GOOGLE_CREDENTIALS' not in os.environ:
-            print("[!] Skip Indexing: Secret 'GOOGLE_CREDENTIALS' not found.")
-            return
-        
-        info = json.loads(os.environ['GOOGLE_CREDENTIALS'])
-        creds = service_account.Credentials.from_service_account_info(
-            info, scopes=["https://www.googleapis.com/auth/indexing"]
-        )
-        service = build("indexing", "v3", credentials=creds)
-        body = {"url": url, "type": "URL_UPDATED"}
-        service.urlNotifications().publish(body=body).execute()
-        print(f"[✓] Google Search Index notified: {url}")
-    except Exception as e:
-        print(f"[!] Indexing Error: {e}")
+def generate_schema(book, city):
+    """Creates Google Search 'Rich Snippets' for your book."""
+    schema = {
+        "@context": "https://schema.org/",
+        "@type": "Book",
+        "name": f"{book['name']} - {city} Readers Choice",
+        "author": {"@type": "Person", "name": "Asif Mehmood"},
+        "offers": {
+            "@type": "Offer",
+            "price": book['price'],
+            "priceCurrency": "USD",
+            "url": book['link']
+        }
+    }
+    return json.dumps(schema)
 
-def build_resource_library():
-    """Generates a new service page and a downloadable resource."""
-    # Pick a random city and service for this hour's update
+def build_page():
     city = random.choice(CITIES)
     service = random.choice(SERVICES)
+    book = random.choice(BOOKS) # Promotes one of your books
     
-    # Create folder structure
-    for folder in ['services', 'downloads']:
-        if not os.path.exists(folder): os.makedirs(folder)
+    slug = f"{service['slug']}-{city.lower()}"
+    if not os.path.exists('services'): os.makedirs('services')
 
-    slug = f"{service['slug']}-{city.lower().replace(' ', '-')}"
-    page_title = f"{service['title']} in {city}"
+    html_content = f"""
+    <html>
+    <head>
+        <title>{service['title']} in {city} | {BRAND_NAME}</title>
+        <script type="application/ld+json">{generate_schema(book, city)}</script>
+        <style>
+            body {{ font-family: sans-serif; line-height: 1.6; padding: 20px; color: #333; }}
+            .book-card {{ border: 2px solid #007bff; padding: 20px; border-radius: 10px; margin-top: 30px; background: #f0f7ff; }}
+            .btn {{ background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; }}
+        </style>
+    </head>
+    <body>
+        <h1>{service['title']} Services in {city}</h1>
+        <p>Looking for expert help in {city}? Our local team is ready to assist with {service['title']}.</p>
+        
+        <div class="book-card">
+            <h2>Featured Resource: {book['name']}</h2>
+            <p>By Author Asif Mehmood</p>
+            <p>{book['desc']}</p>
+            <a href="{book['link']}" class="btn">Get it on Google Play (${book['price']})</a>
+        </div>
+        
+        <footer><p>© 2026 {BRAND_NAME}</p></footer>
+    </body>
+    </html>
+    """
     
-    # 1. Generate SEO Web Page
-    page_path = f"services/{slug}.html"
-    with open(page_path, "w") as f:
-        f.write(f"<html><head><title>{page_title}</title></head><body>")
-        f.write(f"<h1>{page_title}</h1><p>{service['desc']} Available now in {city}.</p>")
-        f.write(f"<footer>© 2026 {BRAND_NAME}</footer></body></html>")
-
-    # 2. Generate Downloadable TXT Resource
-    with open(f"downloads/{slug}-guide.txt", "w") as f:
-        f.write(f"{BRAND_NAME} Official Resource\n")
-        f.write(f"Topic: {page_title}\nDate: {datetime.now()}\n")
-        f.write(f"Summary: This document outlines emergency protocols for {service['title']}.")
-
-    # 3. Notify Google
-    notify_google_indexing(f"{BASE_URL}/{page_path}")
+    with open(f"services/{slug}.html", "w") as f:
+        f.write(html_content)
+    print(f"Created: {slug}.html promoting {book['type']}")
 
 if __name__ == "__main__":
-    human_sync_delay()
-    build_resource_library()
+    build_page()
