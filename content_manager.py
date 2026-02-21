@@ -96,7 +96,6 @@ def build_and_index():
     company_name = "Hubnest"
     tagline = "Essential Services, Expert Solutions"
     book_title = "Becoming You: Confidence, Connection, and Growth"
-    # Your provided Google Profile image
     book_cover_url = "https://play-lh.googleusercontent.com/nIKYSu9wpS89zWGbVtI5fiNjokKbZK_ZZB0rAog7NlHXb9NZtWr05QgI-8HPNSCYy_vO7nUwE9ED9g=w480-h690-rw"
 
     for category in ["plumbing", "book"]:
@@ -106,9 +105,22 @@ def build_and_index():
         if category == "plumbing":
             keyword = random.choice(ULTRA_PLUMBING_KEYWORDS).format(city=city, zip_code=zip_code)
             slug = f"plumber-{city.lower().replace(' ', '-')}-{zip_code}"
+            
+            # 📞 Plumbing specific content
+            action_section = f"""
+            <div class="call-box">
+                <strong>📞 Need Assistance?</strong><br>
+                <a href="tel:3085508314" style="font-size: 20px; color: #1a73e8; text-decoration: none; font-weight: bold;">(308) 550-8314</a>
+            </div>"""
         else:
             keyword = random.choice(ALL_EXPANDED_BOOK_KEYWORDS)
             slug = f"book-{keyword.lower().replace(' ', '-')}-{zip_code}"
+            
+            # 📖 Book specific content (No phone number)
+            action_section = f"""
+            <div style="margin: 20px 0; border-left: 4px solid #1a73e8; padding-left: 15px;">
+                <p style="font-style: italic; color: #5f6368;">"Unlock your potential with expert insights on leadership and self-growth, curated by the Hubnest professional network."</p>
+            </div>"""
 
         file_path = f"services/{slug}.html"
         full_url = f"https://serviceshubnest.github.io/hubnest.github.io/{file_path}"
@@ -144,16 +156,13 @@ def build_and_index():
 
     <div class="content">
         <h2 style="font-size: 20px; color: #1a73e8;">{keyword}</h2>
-        <p>Reliable support and expert solutions for the residents of <b>{city}, {zip_code}</b>. We pride ourselves on quality service and customer satisfaction.</p>
+        <p>Expert solutions for <b>{city}</b>. At {company_name}, we are dedicated to providing high-quality results and professional excellence.</p>
 
-        <div class="call-box">
-            <strong>📞 Need Assistance?</strong><br>
-            <a href="tel:3085508314" style="font-size: 20px; color: #1a73e8; text-decoration: none; font-weight: bold;">(308) 550-8314</a>
-        </div>
+        {action_section}
 
         <hr style="border:0; border-top: 1px solid #eee; margin: 30px 0;">
 
-        <p style="font-size: 12px; color: #70757a; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Verified Recommendation</p>
+        <p style="font-size: 12px; color: #70757a; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Official Recommendation</p>
         
         <a href="https://play.google.com/store/books/details?id=9IG-EQAAQBAJ" class="preview-card" target="_blank">
             <img src="{book_cover_url}" alt="Book Cover" class="cover-img">
