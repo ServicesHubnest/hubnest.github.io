@@ -61,35 +61,42 @@ def notify_google_indexing(url):
 def build_and_index():
     try:
         df = pd.read_excel("locations.xlsx")
-        row = df.sample(n=1).iloc[0]
-        city, zip_code = str(row['City']), str(row['ZipCode'])
     except Exception as e:
         print(f"Excel Error: {e}")
         return
 
-    # Pick keywords
-    p_key = random.choice(ULTRA_PLUMBING_KEYWORDS).format(city=city, zip_code=zip_code)
-    b_key = random.choice(ALL_EXPANDED_BOOK_KEYWORDS)
+    # 🔥 We run this TWICE per execution to get 1 Plumbing + 1 Book page
+    for category in ["plumbing", "book"]:
+        row = df.sample(n=1).iloc[0]
+        city, zip_code = str(row['City']), str(row['ZipCode'])
 
-    slug = f"plumber-{city.lower().replace(' ', '-')}-{zip_code}"
-    file_path = f"services/{slug}.html"
-    full_url = f"https://serviceshubnest.github.io/hubnest.github.io/{file_path}"
+        if category == "plumbing":
+            keyword = random.choice(ULTRA_PLUMBING_KEYWORDS).format(city=city, zip_code=zip_code)
+            slug = f"plumber-{city.lower().replace(' ', '-')}-{zip_code}"
+        else:
+            keyword = random.choice(ALL_EXPANDED_BOOK_KEYWORDS)
+            # Create a unique slug for the book pages too
+            slug = f"book-{keyword.lower().replace(' ', '-')}-{zip_code}"
 
-    # Simple HTML Template
-    html = f"""<!DOCTYPE html><html><head><title>{p_key}</title></head>
-    <body style='font-family:sans-serif; padding:20px;'>
-    <h1>{p_key}</h1>
-    <p>Providing expert plumbing in {city}, {zip_code}. Call (308) 550-8314.</p>
-    <hr>
-    <h3>Recommended Reading: {b_key}</h3>
-    <p>Check out <b>{book_title}</b> by Asif Mehmood on Google Play.</p>
-    </body></html>"""
+        file_path = f"services/{slug}.html"
+        full_url = f"https://serviceshubnest.github.io/hubnest.github.io/{file_path}"
 
-    if not os.path.exists('services'): os.makedirs('services')
-    with open(file_path, "w") as f:
-        f.write(html)
+        # Simple HTML Template
+        html = f"""<!DOCTYPE html><html><head><title>{keyword}</title></head>
+        <body style='font-family:sans-serif; padding:20px;'>
+        <h1>{keyword}</h1>
+        <p>Expert service in {city}, {zip_code}. Contact us for support.</p>
+        <hr>
+        <h3>Featured: {book_title}</h3>
+        <p>Available now for {city} residents.</p>
+        </body></html>"""
 
-    notify_google_indexing(full_url)
+        if not os.path.exists('services'): os.makedirs('services')
+        with open(file_path, "w") as f:
+            f.write(html)
+
+        # This calls the indexing function
+        notify_google_indexing(full_url)
 
 if __name__ == "__main__":
     build_and_index()
