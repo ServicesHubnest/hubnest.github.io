@@ -56,6 +56,34 @@ def notify_google_indexing(url):
         print(f"❌ Indexing Error: {e}")
 
 # ==========================================
+# 🚀 2. THE INDEXING API LOGIC
+# ==========================================
+def notify_google_indexing(url):
+    json_creds = os.getenv("GOOGLE_CREDENTIALS")
+    if not json_creds:
+        print("❌ GOOGLE_CREDENTIALS Secret is missing!")
+        return
+
+    scopes = ["https://www.googleapis.com/auth/indexing"]
+    try:
+        credentials = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(json_creds), scopes)
+        http = credentials.authorize(httplib2.Http())
+        endpoint = "https://indexing.googleapis.com/v3/urlNotifications:publish"
+        
+        content = json.dumps({"url": url, "type": "URL_UPDATED"})
+        response, content_resp = http.request(endpoint, method="POST", body=content)
+        
+        if response.status == 200:
+            print(f"✅ Google Notified: {url}")
+        elif response.status == 429:
+            print("🛑 Quota Limit (200) Reached. Stopping for today.")
+            exit(0)
+        else:
+            print(f"⚠️ Status {response.status}: {content_resp}")
+    except Exception as e:
+        print(f"❌ Indexing Error: {e}")
+
+# ==========================================
 # 🛠️ 3. PAGE BUILDER LOGIC
 # ==========================================
 def build_and_index():
@@ -64,6 +92,11 @@ def build_and_index():
     except Exception as e:
         print(f"Excel Error: {e}")
         return
+
+    # Define your Brand Identity
+    company_name = "Hubnest"
+    tagline = "Essential Services, Expert Solutions"
+    book_title = "Becoming You: Confidence, Connection, and Growth"
 
     # 🔥 Runs TWICE: 1 Plumbing Page + 1 Book Page per execution
     for category in ["plumbing", "book"]:
@@ -80,16 +113,18 @@ def build_and_index():
         file_path = f"services/{slug}.html"
         full_url = f"https://serviceshubnest.github.io/hubnest.github.io/{file_path}"
 
-        # Updated HTML with Schema (for Phone Numbers) and Book Buttons
+        # THE UPDATED PAGE DESIGN
         html = f"""<!DOCTYPE html>
 <html>
 <head>
-    <title>{keyword}</title>
+    <title>{keyword} | {company_name}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script type="application/ld+json">
     {{
       "@context": "https://schema.org",
-      "@type": "PlumbingService",
-      "name": "{keyword}",
+      "@type": "LocalBusiness",
+      "name": "{company_name}",
+      "description": "{keyword}",
       "telephone": "(308) 550-8314",
       "address": {{
         "@type": "PostalAddress",
@@ -100,37 +135,59 @@ def build_and_index():
     }}
     </script>
 </head>
-<body style='font-family:sans-serif; padding:20px; line-height:1.6;'>
-    <h1>{keyword}</h1>
-    <p>Providing expert service in <b>{city}, {zip_code}</b>. Call <b>(308) 550-8314</b> for immediate support.</p>
+<body style='font-family: sans-serif; padding: 0; margin: 0; line-height: 1.6; background: #fdfdfd; color: #333;'>
     
-    <div style='background:#f4f4f4; padding:20px; border-radius:10px; margin-top:30px; border:1px solid #ddd;'>
-        <h3 style='margin-top:0;'>Special Recommendation: {book_title}</h3>
-        <p>By Author <b>Asif Mehmood</b></p>
-        <p>Master the art of confidence and connection with this practical guide.</p>
+    <div style='background: #fff; border-bottom: 3px solid #007bff; padding: 25px; text-align: center;'>
+        <h1 style='margin: 0; color: #222; font-size: 28px; letter-spacing: -1px;'>{company_name}</h1>
+        <p style='margin: 5px 0 0 0; color: #555; font-weight: 600; font-size: 15px;'>{tagline}</p>
+    </div>
+
+    <div style='max-width: 700px; margin: 30px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);'>
+        <h2 style='color: #0056b3; border-bottom: 1px solid #eee; padding-bottom: 10px;'>{keyword}</h2>
+        <p>Looking for reliable support in <b>{city} ({zip_code})</b>? <b>{company_name}</b> delivers <i>{tagline}</i> for every client. Our local team is ready to assist you with professional care and efficiency.</p>
         
-        <div style='margin-top:15px;'>
-            <a href="https://play.google.com/store/books/details?id=9IG-EQAAQBAJ" 
-               style="background:#007bff; color:white; padding:10px 20px; text-decoration:none; border-radius:5px; margin-right:10px; display:inline-block;">
-               📖 Get the E-Book
-            </a>
-            <a href="https://play.google.com/store/audiobooks/details?id=AQAAAEAaNSp1IM" 
-               style="background:#28a745; color:white; padding:10px 20px; text-decoration:none; border-radius:5px; display:inline-block;">
-               🎧 Get the Audiobook
-            </a>
+        <div style='background: #e7f3ff; border-left: 5px solid #007bff; padding: 15px; margin: 20px 0; border-radius: 0 5px 5px 0;'>
+            <strong style='color: #0056b3;'>📞 Contact Support:</strong> 
+            <a href="tel:3085508314" style="color:#222; text-decoration:none; font-weight: bold; font-size: 1.1em;">(308) 550-8314</a>
+        </div>
+
+        <hr style='border: 0; border-top: 1px solid #eee; margin: 40px 0;'>
+
+        <div style='text-align: center; background: #f8f9fa; padding: 30px; border-radius: 15px; border: 1px solid #e9ecef;'>
+            <h3 style='margin-top: 0; color: #343a40;'>Verified Professional Resource</h3>
+            <p style='color: #666;'>We highly recommend this guide on confidence and connection by author <b>Asif Mehmood</b>.</p>
+            <p style='font-weight: bold; font-size: 1.2em; color: #000;'>{book_title}</p>
+            
+            <div style='margin-top: 25px;'>
+                <a href="https://play.google.com/store/books/details?id=9IG-EQAAQBAJ" target="_blank">
+                    <img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' style='width: 190px;'/>
+                </a>
+                <div style='margin-top: 15px;'>
+                    <a href="https://play.google.com/store/audiobooks/details?id=AQAAAEAaNSp1IM" style="color: #28a745; text-decoration: none; font-weight: bold; font-size: 0.95em;">
+                        🎧 Also available as an Audiobook
+                    </a>
+                </div>
+            </div>
+            
+            <p style='margin-top: 20px; font-size: 0.85em; color: #999;'>✓ Safe Link | Verified via Google Play Console</p>
         </div>
     </div>
+
+    <footer style='text-align: center; padding: 30px; font-size: 13px; color: #888;'>
+        &copy; 2026 <b>{company_name}</b><br>
+        {tagline}<br>
+        Serving {city}, {zip_code}
+    </footer>
 </body>
 </html>"""
 
-        # Ensure directory exists and write file
         if not os.path.exists('services'): 
             os.makedirs('services')
-            
+        
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(html)
 
-        # Notify Google
+        # Notify Google of the new professional page
         notify_google_indexing(full_url)
 
 if __name__ == "__main__":
