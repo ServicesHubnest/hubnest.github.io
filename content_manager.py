@@ -3,7 +3,24 @@ import json
 import random
 import pandas as pd
 import string
+def link_to_homepage(filename, title):
+    homepage = "index.html"
+    if not os.path.exists(homepage): return
+    with open(homepage, "r", encoding="utf-8") as f:
+        html_content = f.read()
+    
+    # We point to services/ because that's where your files are stored
+    link_url = f"services/{filename}"
+    new_link_html = f'            <li><a href="{link_url}">{title}</a></li>'
 
+    if link_url in html_content: return
+
+    marker = ""
+    if marker in html_content:
+        updated_html = html_content.replace(marker, f"{marker}\n{new_link_html}")
+        with open(homepage, "w", encoding="utf-8") as f:
+            f.write(updated_html)
+        print(f"🔗 Linked {title} to homepage.")
 # ==========================================
 # 🔥 1. SUPERCHARGED KEYWORD LISTS (10,000+ COMBOS)
 # ==========================================
