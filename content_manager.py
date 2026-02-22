@@ -8,7 +8,7 @@ def link_to_homepage(filename, title):
     if not os.path.exists(homepage): 
         return
     
-    # The specific marker you added to your index.html
+    # 🛑 FIX: Use a real marker, NEVER an empty string ""
     marker = ""
     link_url = f"services/{filename}"
     new_link_html = f'            <li><a href="{link_url}">{title}</a></li>'
@@ -16,21 +16,22 @@ def link_to_homepage(filename, title):
     with open(homepage, "r", encoding="utf-8") as f:
         html_content = f.read()
 
-    # Prevent duplicate links
+    # Avoid duplicate links
     if link_url in html_content: 
         return
 
-    # Only replace if the marker actually exists
-    if marker in html_content:
-        # We replace the marker with itself + the new link
-        # This keeps the marker there for the next run
-        updated_html = html_content.replace(marker, f"{marker}\n{new_link_html}")
-        
-        with open(homepage, "w", encoding="utf-8") as f:
-            f.write(updated_html)
-        print(f"🔗 Linked {title} to homepage.")
-    else:
-        print(f"⚠️ Warning: Marker '{marker}' not found in index.html")
+    # Safety check: if the marker is empty or missing, stop the crash
+    if not marker or marker not in html_content:
+        print(f"❌ Error: Marker '{marker}' not found in {homepage}")
+        return
+
+    # Replace the marker with itself + the new link
+    updated_html = html_content.replace(marker, f"{marker}\n{new_link_html}")
+    
+    with open(homepage, "w", encoding="utf-8") as f:
+        f.write(updated_html)
+    
+    print(f"🔗 Linked {title} to homepage.")
 # ==========================================
 # 🔥 1. SUPERCHARGED KEYWORD LISTS (10,000+ COMBOS)
 # ==========================================
