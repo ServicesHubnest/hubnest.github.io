@@ -17,7 +17,8 @@ jobs:
     - name: Generate the sitemap
       uses: cicirello/generate-sitemap@v1
       with:
-        base-url-path: https://serviceshubnest.github.io/
+        # Change this line to include the folder name
+        base-url-path: https://serviceshubnest.github.io/hubnest.github.io/
         path-to-root: .
         include-pdf: false
 
