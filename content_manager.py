@@ -151,3 +151,21 @@ if __name__ == "__main__":
         build_and_index()
     
     print("✅ 4 pages created. Ready for GitHub push and Google notification.")
+    def finalize_seo():
+    base_url = "https://serviceshubnest.github.io/hubnest.github.io/"
+    # 1. Create Sitemap
+    pages = [f for f in os.listdir('services') if f.endswith('.html')]
+    xml = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    xml.append(f'  <url><loc>{base_url}</loc></url>')
+    for p in pages:
+        xml.append(f'  <url><loc>{base_url}services/{p}</loc></url>')
+    xml.append('</urlset>')
+    
+    with open("sitemap.xml", "w") as f: f.write("\n".join(xml))
+    
+    # 2. Create .nojekyll (This stops the "Could not read" error)
+    with open(".nojekyll", "w") as f: f.write("")
+
+if __name__ == "__main__":
+    # ... your existing page generation code ...
+    finalize_seo() # Call this last
