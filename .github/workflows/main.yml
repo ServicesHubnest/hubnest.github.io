@@ -6,48 +6,48 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-index:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      status: ${{ job.status }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
+      - uses: actions/checkout@v4
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-
       - name: Install Deps
-        run: pip install pandas openpyxl httplib2 oauth2client requests
-
+        run: pip install pandas openpyxl requests
+      
       - name: Generate Content and Sitemap
         run: python content_manager.py
-
-      - name: Push HTML and Sitemap
+        
+      - name: Push to GitHub
         run: |
           git config --global user.name "Hubnest-Bot"
           git config --global user.email "bot@hubnest.com"
-          git add services/*.html sitemap.xml .nojekyll
-          git commit -m "Update pages and sitemap [skip ci]" || echo "No changes"
+          git add .
+          git commit -m "Publishing new pages [skip ci]" || exit 0
           git push
 
-      - name: ⏳ Wait for Deployment
-        run: sleep 120
-
+  index:
+    needs: build # <--- THIS ENSURES THE PUSH FINISHED FIRST
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install Indexing Deps
+        run: pip install httplib2 oauth2client requests
+        
+      - name: ⏳ Wait for GitHub Pages Deployment
+        run: sleep 60 # Gives GitHub time to move files from Repo to Live Web
+        
       - name: Notify Google
-        run: python notify_google.py
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-
-      - name: Save Indexing Log
-        run: |
-          git config --global user.name "Hubnest-Bot"
-          git config --global user.email "bot@hubnest.com"
-          git add indexed_urls.txt
-          git pull --rebase origin main
-          git commit -m "Update indexing log [skip ci]" || echo "No changes"
-          git push
+        run: python notify_google.py
