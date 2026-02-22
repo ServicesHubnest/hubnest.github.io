@@ -143,11 +143,11 @@ def build_and_index():
         print(f"✅ Created {category.upper()}: {slug}")
 
 if __name__ == "__main__":
-    print("🚀 Starting Daily Batch: Generating 190 pages...")
+    # We create only 4 pages per run (2 plumbing + 2 book)
+    # 4 pages * 48 runs per day = 192 total requests (Safe under 200 limit)
+    print("🚀 Starting 30-Minute Batch: Generating 4 pages...")
     
-    # Each loop creates 2 pages (1 plumbing + 1 book)
-    # 95 loops * 2 pages = 190 total URLs
-    for i in range(95):
+    for i in range(2): 
         build_and_index()
     
-    print("🏁 190 pages created. Ready for GitHub push and Google notification.")
+    print("✅ 4 pages created. Ready for GitHub push and Google notification.")
