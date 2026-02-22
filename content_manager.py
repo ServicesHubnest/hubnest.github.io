@@ -7,8 +7,6 @@ import string
 # ==========================================
 # 🔥 1. SUPERCHARGED KEYWORD LISTS (10,000+ COMBOS)
 # ==========================================
-
-# --- 📞 PLUMBING (High Intent) ---
 p_urgency = ["Emergency", "24-7", "Instant", "Same-Day", "Licensed", "Fast", "Reliable", "Expert", "Affordable", "Top-Rated"]
 p_intent = ["Fix", "Repair", "Installation", "Replacement", "Service", "Unclogging", "Detection", "Maintenance", "Cleanup", "Inspection"]
 p_service = ["Plumber", "Drain", "Pipe", "Water Heater", "Sewer Line", "Slab Leak", "Toilet", "Faucet", "Sump Pump", "Gas Line", "Main Line", "Boiler"]
@@ -16,7 +14,6 @@ p_local = ["{city}", "{zip_code}", "Near Me", "Local", "In my area", "Nearby", "
 
 ULTRA_PLUMBING_KEYWORDS = [f"{u} {i} {s} {l}" for u in p_urgency for i in p_intent for s in p_service for l in p_local]
 
-# --- 📖 BOOKS (High Intent) ---
 b_format = ["Digital", "Audiobook", "Print", "E-book", "Official"]
 b_buyer = ["Book", "Guide", "Blueprint", "Manual", "Masterclass", "Handbook", "Strategy", "System"]
 b_problem = ["Overcoming Self-Doubt", "Stop Overthinking", "Build Confidence", "Social Skills", "Public Speaking", "Anxiety", "Networking", "Leadership"]
@@ -25,18 +22,13 @@ b_outcome = ["Success", "Growth", "Freedom", "Connection", "Impact"]
 
 ALL_EXPANDED_BOOK_KEYWORDS = [f"{f} {bu} on {p} for {a} for {o}" for f in b_format for bu in b_buyer for p in b_problem for a in b_audience for o in b_outcome]
 
-# ==========================================
-# 🛠️ 2. UTILITIES
-# ==========================================
 def generate_uid(length=4):
-    """Generates a random ID like 'a1z9' to ensure unique URLs."""
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
 
 # ==========================================
 # 🛠️ 3. PAGE BUILDER LOGIC
 # ==========================================
 def build_and_index():
-    # ✅ FIX: We only create the folder if it's missing. We NEVER delete it now.
     if not os.path.exists('services'):
         os.makedirs('services')
 
@@ -51,50 +43,47 @@ def build_and_index():
     phone = "(308) 550-8314"
     book_title = "Becoming You: Confidence, Connection, and Growth"
 
-    # Generate pages for both categories in one run
     for category in ["plumbing", "book"]:
         row = df.sample(n=1).iloc[0]
         city, zip_code = str(row['City']), str(row['ZipCode'])
         uid = generate_uid()
         city_slug = city.lower().replace(' ', '-')
 
+        # 🚀 START: CATEGORY LOGIC
         if category == "plumbing":
-            # --- 📞 PRO PLUMBING LOGIC ---
             keyword = random.choice(ULTRA_PLUMBING_KEYWORDS).format(city=city, zip_code=zip_code)
             page_title = f"{keyword} | {company_name} Plumbing"
-            
-            # UNIQUE SEO SLUG
             slug = f"{keyword.lower().replace(' ', '-')}-{uid}"
             
-            main_content = f"""
+            # --- 📞 PLUMBING HTML ---
+            specific_content = f"""
             <span class="badge">📍 LOCAL SERVICE: {city}</span>
             <h1>{keyword}</h1>
             <p>Licensed plumbing experts providing fast, same-day service in <b>{city}</b>. We specialize in emergency repairs and 24/7 maintenance.</p>
-            
             <div class="cta-box">
                 <p>LICENSED • BONDED • INSURED</p>
                 <strong>FREE ESTIMATE & 24/7 DISPATCH</strong>
-                <a href="tel:3085508314" class="phone-link">(308) 550-8314</a>
+                <a href="tel:3085508314" class="phone-link">{phone}</a>
                 <a href="tel:3085508314" class="btn btn-red">CALL FOR SERVICE</a>
                 <p style="margin: 10px 0 0; font-size: 12px; color: #1e8e3e; font-weight: bold;">✅ Tap to Call Now</p>
             </div>
             """
         else:
-            # --- 📖 BOOK LOGIC ---
             keyword = random.choice(ALL_EXPANDED_BOOK_KEYWORDS)
             page_title = f"{keyword} | Official {company_name} Guide"
-            
-            # UNIQUE SEO SLUG
             slug = f"book-{keyword.lower().replace(' ', '-')}-{city_slug}-{uid}"
             
-            main_content = f"""
+            # --- 📖 BOOK HTML ---
+            # Stable Book Image Address (zoom=1 is reliable)
+            book_img = "https://books.google.com/books/content?id=9IG-EQAAQBAJ&printsec=frontcover&img=1&zoom=1"
+            
+            specific_content = f"""
             <span class="badge badge-green">📖 Official Publication</span>
             <h1>{keyword}</h1>
             <p>Master the blueprint for confidence and leadership. This {keyword} is curated for professionals in {city}.</p>
-            
             <div class="book-card">
                 <div class="book-flex">
-                    <img src="https://play.google.com/books/publisher/content/images/frontcover/9IG-EQAAQBAJ?fife=w480-h690" class="book-img" alt="Book Cover">
+                    <img src="{book_img}" class="book-img" alt="Book Cover">
                     <div class="book-info">
                         <h3 style="margin:0 0 5px 0; font-size:18px;">{book_title}</h3>
                         <p style="margin:0; font-size:14px; color:#5f6368;">By <b>Asif Mehmood</b></p>
@@ -109,7 +98,7 @@ def build_and_index():
             """
 
         # --- UNIVERSAL TEMPLATE ---
-        html = f"""<!DOCTYPE html>
+        html_output = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -140,7 +129,7 @@ def build_and_index():
         <div style="font-size:12px; font-weight:bold; color:#5f6368;">{tagline}</div>
     </div>
     <div class="container">
-        <div class="card">{main_content}</div>
+        <div class="card">{specific_content}</div>
     </div>
     <footer>
         © 2026 {company_name} Professional Services<br>
@@ -150,9 +139,8 @@ def build_and_index():
 </html>"""
 
         with open(f"services/{slug}.html", "w", encoding="utf-8") as f:
-            f.write(html)
-        print(f"✅ Created: {slug}")
+            f.write(html_output)
+        print(f"✅ Created {category.upper()}: {slug}")
 
 if __name__ == "__main__":
-    print("🎬 Starting 10k SEO Build...")
     build_and_index()
