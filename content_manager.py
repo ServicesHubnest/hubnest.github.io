@@ -44,27 +44,30 @@ def build_and_index():
         city, zip_code = str(row['City']), str(row['ZipCode'])
 
         if category == "plumbing":
-            # --- 📞 PLUMBING DESIGN ---
+            # --- 📞 PRO PLUMBING DATA ---
             keyword = random.choice(ULTRA_PLUMBING_KEYWORDS).format(city=city, zip_code=zip_code)
             page_title = f"{company_name} Plumbing: Affordable Local Plumber in {city}"
             slug = f"plumber-{city.lower().replace(' ', '-')}-{zip_code}"
             
+            # Note: tel: links trigger the dialer on mobile
             main_content = f"""
             <span class="badge">📍 LOCAL SERVICE: {city}</span>
             <h1>{keyword}</h1>
-            <p>Licensed plumbing experts providing fast, same-day, affordable services when you need them most. We specialize in everything from emergency repairs to routine maintenance.</p>
+            <p>Licensed plumbing experts providing fast, same-day service. We specialize in emergency repairs and routine maintenance for homes in <b>{city}</b>.</p>
             
             <div class="cta-box">
                 <p>LICENSED • BONDED • INSURED</p>
                 <strong>FREE ESTIMATE & 24/7 DISPATCH</strong>
-                <a href="tel:3085508314" class="phone-link">{phone}</a>
-                <a href="tel:3085508314" class="btn btn-red">Call For Service</a>
+                <a href="tel:3085508314" class="phone-link">(308) 550-8314</a>
+                
+                <a href="tel:3085508314" class="btn btn-red">CALL FOR SERVICE</a>
+                <p style="margin: 10px 0 0; font-size: 12px; color: #1e8e3e; font-weight: bold;">✅ Tap to Call Now</p>
             </div>
 
             <ul class="features">
-                <li>✅ <b>Same Day:</b> Fast response in {city}.</li>
-                <li>✅ <b>24/7:</b> Emergency repairs available now.</li>
-                <li>✅ <b>Upfront:</b> Honest pricing, no hidden fees.</li>
+                <li>✅ <b>Same Day:</b> Fast local response.</li>
+                <li>✅ <b>24/7:</b> Emergency repairs available.</li>
+                <li>✅ <b>Transparent:</b> No upfront or hidden fees.</li>
             </ul>
             """
         else:
