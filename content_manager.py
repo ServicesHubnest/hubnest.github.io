@@ -142,18 +142,13 @@ def build_and_index():
             f.write(html_output)
         print(f"✅ Created {category.upper()}: {slug}")
 
-if __name__ == "__main__":
-    # We create only 4 pages per run (2 plumbing + 2 book)
-    # 4 pages * 48 runs per day = 192 total requests (Safe under 200 limit)
-    print("🚀 Starting 30-Minute Batch: Generating 4 pages...")
-    
-    for i in range(2): 
-        build_and_index()
-    
-    print("✅ 4 pages created. Ready for GitHub push and Google notification.")
-    def finalize_seo():
+# ==========================================
+# SEO FINALIZER (Defined outside the build loop)
+# ==========================================
+def finalize_seo():
     base_url = "https://serviceshubnest.github.io/hubnest.github.io/"
-    # 1. Create Sitemap
+    if not os.path.exists('services'): return
+    
     pages = [f for f in os.listdir('services') if f.endswith('.html')]
     xml = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     xml.append(f'  <url><loc>{base_url}</loc></url>')
@@ -161,11 +156,22 @@ if __name__ == "__main__":
         xml.append(f'  <url><loc>{base_url}services/{p}</loc></url>')
     xml.append('</urlset>')
     
-    with open("sitemap.xml", "w") as f: f.write("\n".join(xml))
-    
-    # 2. Create .nojekyll (This stops the "Could not read" error)
-    with open(".nojekyll", "w") as f: f.write("")
+    with open("sitemap.xml", "w", encoding="utf-8") as f:
+        f.write("\n".join(xml))
+    with open(".nojekyll", "w") as f:
+        f.write("")
+    print("✅ SEO Files (Sitemap & .nojekyll) Updated.")
 
+# ==========================================
+# EXECUTION
+# ==========================================
 if __name__ == "__main__":
-    # ... your existing page generation code ...
-    finalize_seo() # Call this last
+    print("🚀 Starting 30-Minute Batch: Generating 4 pages...")
+    
+    for i in range(2): 
+        build_and_index()
+    
+    # This now runs correctly after the pages are built
+    finalize_seo()
+    
+    print("✅ Done. Ready for GitHub Action push.")
