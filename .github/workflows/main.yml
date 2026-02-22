@@ -20,22 +20,40 @@ jobs:
       - name: Install Deps
         run: pip install pandas openpyxl httplib2 oauth2client requests
 
+      # Step 1: Generate the new HTML pages
       - name: Generate 4 Pages
         run: python content_manager.py
 
-      - name: Push to Public Repo
+      # Step 2: Push the NEW HTML files first so they become "Live"
+      # Google can't index a 404 page, so they must be on GitHub first
+      - name: Push HTML to GitHub
         run: |
           git config --global user.name "Hubnest-Bot"
           git config --global user.email "bot@hubnest.com"
-          git add services/*.html indexed_urls.txt
-          git commit -m "Auto-update pages [skip ci]" || echo "No changes"
+          git add services/*.html
+          git commit -m "Create new service pages [skip ci]" || echo "No new pages"
           git push
 
+      # Step 3: Wait for GitHub Pages to actually deploy the files
       - name: ⏳ Wait for Deployment
-        # 120 seconds to ensure GitHub Pages updates the live site
         run: sleep 120
 
+      # Step 4: Now that pages are LIVE, notify Google
       - name: Notify Google
         run: python notify_google.py
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      # Step 5: Save the "indexed_urls.txt" log back to the repo
+      - name: Save Indexing Log
+        run: |
+          git config --global user.name "Hubnest-Bot"
+          git config --global user.email "bot@hubnest.com"
+          
+          # Triple-safety: ensure the file exists so 'git add' doesn't fail
+          touch indexed_urls.txt
+          
+          git add indexed_urls.txt
+          
+          # Only commit if the log actually changed
+          git diff --staged --quiet || (git commit -m "Update indexing log [skip ci]" && git push)
