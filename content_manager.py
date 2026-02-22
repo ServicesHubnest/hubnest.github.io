@@ -155,8 +155,13 @@ def build_and_index():
 </body>
 </html>"""
 
+        # ... your existing code ...
         with open(f"services/{slug}.html", "w", encoding="utf-8") as f:
             f.write(html_output)
+        
+        # ADD THIS LINE HERE:
+        link_to_homepage(f"{slug}.html", page_title)
+
         print(f"✅ Created {category.upper()}: {slug}")
 
 # ==========================================
