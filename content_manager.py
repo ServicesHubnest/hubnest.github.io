@@ -94,7 +94,7 @@ def build_and_index():
             
             <div class="book-card">
                 <div class="book-flex">
-                    <img src="https://m.media-amazon.com/images/I/41-A8mN-DmL._SY445_SX342_.jpg" class="book-img" alt="Book Cover">
+                    <img src="https://play.google.com/books/publisher/content/images/frontcover/9IG-EQAAQBAJ?fife=w480-h690" class="book-img" alt="Book Cover">
                     <div class="book-info">
                         <h3 style="margin:0 0 5px 0; font-size:18px;">{book_title}</h3>
                         <p style="margin:0; font-size:14px; color:#5f6368;">By <b>Asif Mehmood</b></p>
