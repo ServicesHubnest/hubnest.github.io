@@ -14,7 +14,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # Fetch all history so git push works reliably
           fetch-depth: 0
 
       - name: Setup Python
@@ -25,7 +24,10 @@ jobs:
       - name: Install All Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pandas openpyxl requests httplib2 oauth2client
+          # Use the requirements file instead of listing them manually
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # Adding this specifically just to be 100% safe
+          pip install google-api-python-client
 
       - name: Generate Content and Sitemap
         run: python content_manager.py
@@ -35,12 +37,10 @@ jobs:
           git config --global user.name "Hubnest-Bot"
           git config --global user.email "bot@hubnest.com"
           git add .
-          # The || exit 0 prevents the workflow from failing if there are no new changes
           git commit -m "Publishing new pages [skip ci]" || exit 0
           git push
 
       - name: ⏳ Wait for GitHub Pages Deployment
-        # We wait here to ensure GitHub's servers have received the push
         run: sleep 60 
 
       - name: Notify Google
