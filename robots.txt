@@ -1,4 +1,4 @@
 User-agent: *
-Allow: /
+Disallow: /
 
 Sitemap: https://serviceshubnest.github.io/hubnest.github.io/sitemap.xml
